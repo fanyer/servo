@@ -6,6 +6,7 @@ use context::StandaloneStyleContext;
 use std::mem;
 use style::context::SharedStyleContext;
 use style::dom::OpaqueNode;
+use style::traversal::ForceTraversalStop;
 use style::traversal::{DomTraversalContext, recalc_style_at};
 use wrapper::GeckoNode;
 
@@ -27,13 +28,16 @@ impl<'lc, 'ln> DomTraversalContext<GeckoNode<'ln>> for RecalcStyleOnly<'lc> {
         }
     }
 
-    fn process_preorder(&self, node: GeckoNode<'ln>) {
+    fn process_preorder(&self, node: GeckoNode<'ln>) -> ForceTraversalStop {
         // FIXME(pcwalton): Stop allocating here. Ideally this should just be done by the HTML
         // parser.
         node.initialize_data();
 
-        recalc_style_at(&self.context, self.root, node);
+        recalc_style_at(&self.context, self.root, node)
     }
 
     fn process_postorder(&self, _: GeckoNode<'ln>) {}
+
+    /// We don't use the post-order traversal for anything.
+    fn should_traverse_back_up(&self) -> bool { false }
 }
